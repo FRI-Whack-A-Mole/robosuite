@@ -9,7 +9,7 @@ from robosuite.controllers import load_part_controller_config
 from robosuite.robots.robot import Robot
 from robosuite.utils.observables import Observable, sensor
 
-
+#whoa this is amazing !!
 class MobileRobot(Robot):
     """
     Initializes a robot with a fixed base.
