@@ -255,13 +255,13 @@ class Lift(ManipulationEnv):
 
             # reaching reward
             dist = self._gripper_to_target(
-                gripper=self.robots[0].gripper, target=self.cube.root_body, target_type="body", return_distance=True
+                gripper=self.robots[0].gripper, target=self.mole.root_body, target_type="body", return_distance=True
             )
             reaching_reward = 1 - np.tanh(10.0 * dist)
             reward += reaching_reward
 
             # grasping reward
-            if self._check_grasp(gripper=self.robots[0].gripper, object_geoms=self.cube):
+            if self._check_grasp(gripper=self.robots[0].gripper, object_geoms=self.mole):
                 reward += 0.25
 
         # Scale reward if requested
@@ -299,6 +299,14 @@ class Lift(ManipulationEnv):
             "specular": "0.4",
             "shininess": "0.1",
         }
+        bluewood = CustomMaterial(
+            texture="WoodBlue",
+            tex_name="bluewood",
+            mat_name="bluewood_mat",
+            tex_attrib=tex_attrib,
+            mat_attrib=mat_attrib,
+        )
+
         redwood = CustomMaterial(
             texture="WoodRed",
             tex_name="redwood",
@@ -306,22 +314,54 @@ class Lift(ManipulationEnv):
             tex_attrib=tex_attrib,
             mat_attrib=mat_attrib,
         )
-        self.cube = BoxObject(
+
+        self.mole = BoxObject(
             name="cube",
-            size_min=[0.020, 0.020, 0.020],  # [0.015, 0.015, 0.015],
-            size_max=[0.022, 0.022, 0.022],  # [0.018, 0.018, 0.018])
+            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
+            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
             rgba=[1, 0, 0, 1],
             material=redwood,
+            obj_type="all"
+        )
+
+        self.cube0 = BoxObject(
+            name="cube",
+            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
+            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+            material=bluewood,
+            obj_type="visual"
+        )
+
+        self.cube1 = BoxObject(
+            name="cube",
+            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
+            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+            material=bluewood,
+            obj_type="visual"
+        )
+
+        self.cube2 = BoxObject(
+            name="cube",
+            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
+            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+            material=bluewood,
+            obj_type="visual"
         )
 
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
-            self.placement_initializer.add_objects(self.cube)
+            self.placement_initializer.add_objects(self.mole)
+            self.placement_initializer.add_objects(self.cube0)
+            self.placement_initializer.add_objects(self.cube1)
+            self.placement_initializer.add_objects(self.cube2)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
-                mujoco_objects=self.cube,
+                mujoco_objects=self.mole,
                 x_range=[-0.03, 0.03],
                 y_range=[-0.03, 0.03],
                 rotation=None,
@@ -335,7 +375,7 @@ class Lift(ManipulationEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=self.cube,
+            mujoco_objects=self.mole,
         )
 
     def _setup_references(self):
@@ -347,7 +387,7 @@ class Lift(ManipulationEnv):
         super()._setup_references()
 
         # Additional object references from this env
-        self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
+        self.mole_body_id = self.sim.model.body_name2id(self.mole.root_body)
 
     def _setup_observables(self):
         """
@@ -366,11 +406,11 @@ class Lift(ManipulationEnv):
             # cube-related observables
             @sensor(modality=modality)
             def cube_pos(obs_cache):
-                return np.array(self.sim.data.body_xpos[self.cube_body_id])
+                return np.array(self.sim.data.body_xpos[self.mole_body_id])
 
             @sensor(modality=modality)
             def cube_quat(obs_cache):
-                return convert_quat(np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw")
+                return convert_quat(np.array(self.sim.data.body_xquat[self.mole_body_id]), to="xyzw")
 
             sensors = [cube_pos, cube_quat]
 
@@ -424,7 +464,7 @@ class Lift(ManipulationEnv):
 
         # Color the gripper visualization site according to its distance to the cube
         if vis_settings["grippers"]:
-            self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
+            self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.mole)
 
     def _check_success(self):
         """
@@ -433,7 +473,7 @@ class Lift(ManipulationEnv):
         Returns:
             bool: True if cube has been lifted
         """
-        cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
+        cube_height = self.sim.data.body_xpos[self.mole_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
 
         # cube is higher than the table top above a margin
