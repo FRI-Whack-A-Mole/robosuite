@@ -218,57 +218,104 @@ class Lift(ManipulationEnv):
             renderer=renderer,
             renderer_config=renderer_config,
         )
-
+    
     def reward(self, action=None):
         """
-        Reward function for the task.
+        reward function
 
-        Sparse un-normalized reward:
-
-            - a discrete reward of 2.25 is provided if the cube is lifted
-
-        Un-normalized summed components if using reward shaping:
-
-            - Reaching: in [0, 1], to encourage the arm to reach the cube
-            - Grasping: in {0, 0.25}, non-zero if arm is grasping the cube
-            - Lifting: in {0, 1}, non-zero if arm has lifted the cube
-
-        The sparse reward only consists of the lifting component.
-
-        Note that the final reward is normalized and scaled by
-        reward_scale / 2.25 as well so that the max score is equal to reward_scale
+        using a distance-based reward for reaching the cube
+        (the closer the gripper is to the cube, the higher the reward)
+        
+        a small positive reward is given for staying close, and a larger
+        reward is given upon successful lift
 
         Args:
             action (np array): [NOT USED]
-
         Returns:
             float: reward value
         """
         reward = 0.0
+        gripper = self.robots[0].gripper
+        cube_body = self.cube.root_body
 
-        # sparse completion reward
+        #distance between the gripper and the cube
+        dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
+
+        #defining a maximum distance for consideration(like further away gives minimal reward)
+        max_reach_distance = 0.2  #TODO: adjust later??
+
+        #calculate a reaching reward based on the distance
+        if dist < max_reach_distance:
+            reaching_reward = (max_reach_distance - dist) / max_reach_distance
+            reward += 0.5 * reaching_reward  # Scale the reaching reward
+
+        #check for grasping
+        if self._check_grasp(gripper=gripper, object_geoms=self.cube):
+            reward += 0.25
+
+        #check if the cube has been lifted
         if self._check_success():
-            reward = 2.25
+            reward += 1.5  # Larger reward for lifting
 
-        # use a shaping reward
-        elif self.reward_shaping:
+        #TODO: can add a small negative penalty for each step for more efficiency
+        #ex. reward -= 0.001
 
-            # reaching reward
-            dist = self._gripper_to_target(
-                gripper=self.robots[0].gripper, target=self.mole.root_body, target_type="body", return_distance=True
-            )
-            reaching_reward = 1 - np.tanh(10.0 * dist)
-            reward += reaching_reward
-
-            # grasping reward
-            if self._check_grasp(gripper=self.robots[0].gripper, object_geoms=self.mole):
-                reward += 0.25
-
-        # Scale reward if requested
+        #scale reward if requested -- idk this was there before
         if self.reward_scale is not None:
-            reward *= self.reward_scale / 2.25
+            reward *= self.reward_scale
 
         return reward
+
+    # def reward(self, action=None):
+    #     """
+    #     Reward function for the task.
+
+    #     Sparse un-normalized reward:
+
+    #         - a discrete reward of 2.25 is provided if the cube is lifted
+
+    #     Un-normalized summed components if using reward shaping:
+
+    #         - Reaching: in [0, 1], to encourage the arm to reach the cube
+    #         - Grasping: in {0, 0.25}, non-zero if arm is grasping the cube
+    #         - Lifting: in {0, 1}, non-zero if arm has lifted the cube
+
+    #     The sparse reward only consists of the lifting component.
+
+    #     Note that the final reward is normalized and scaled by
+    #     reward_scale / 2.25 as well so that the max score is equal to reward_scale
+
+    #     Args:
+    #         action (np array): [NOT USED]
+
+    #     Returns:
+    #         float: reward value
+    #     """
+    #     reward = 0.0
+
+    #     # sparse completion reward
+    #     if self._check_success():
+    #         reward = 2.25
+
+    #     # use a shaping reward
+    #     elif self.reward_shaping:
+
+    #         # reaching reward
+    #         dist = self._gripper_to_target(
+    #             gripper=self.robots[0].gripper, target=self.cube.root_body, target_type="body", return_distance=True
+    #         )
+    #         reaching_reward = 1 - np.tanh(10.0 * dist)
+    #         reward += reaching_reward
+
+    #         # grasping reward
+    #         if self._check_grasp(gripper=self.robots[0].gripper, object_geoms=self.cube):
+    #             reward += 0.25
+
+    #     # Scale reward if requested
+    #     if self.reward_scale is not None:
+    #         reward *= self.reward_scale / 2.25
+
+    #     return reward
 
     def _load_model(self):
         """
@@ -299,14 +346,6 @@ class Lift(ManipulationEnv):
             "specular": "0.4",
             "shininess": "0.1",
         }
-        bluewood = CustomMaterial(
-            texture="WoodBlue",
-            tex_name="bluewood",
-            mat_name="bluewood_mat",
-            tex_attrib=tex_attrib,
-            mat_attrib=mat_attrib,
-        )
-
         redwood = CustomMaterial(
             texture="WoodRed",
             tex_name="redwood",
@@ -314,54 +353,23 @@ class Lift(ManipulationEnv):
             tex_attrib=tex_attrib,
             mat_attrib=mat_attrib,
         )
-
-        self.mole = BoxObject(
+        self.cube = BoxObject(
             name="cube",
-            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
-            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
+            size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
+            size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
             rgba=[1, 0, 0, 1],
             material=redwood,
-            obj_type="all"
-        )
-
-        self.cube0 = BoxObject(
-            name="cube",
-            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
-            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
-            rgba=[1, 0, 0, 1],
-            material=bluewood,
-            obj_type="visual"
-        )
-
-        self.cube1 = BoxObject(
-            name="cube",
-            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
-            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
-            rgba=[1, 0, 0, 1],
-            material=bluewood,
-            obj_type="visual"
-        )
-
-        self.cube2 = BoxObject(
-            name="cube",
-            size_min=[0.030, 0.030, 0.050],  # [0.015, 0.015, 0.015],
-            size_max=[0.032, 0.032, 0.052],  # [0.018, 0.018, 0.018])
-            rgba=[1, 0, 0, 1],
-            material=bluewood,
-            obj_type="visual"
+            obj_type="all",
         )
 
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
-            self.placement_initializer.add_objects(self.mole)
-            self.placement_initializer.add_objects(self.cube0)
-            self.placement_initializer.add_objects(self.cube1)
-            self.placement_initializer.add_objects(self.cube2)
+            self.placement_initializer.add_objects(self.cube)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
-                mujoco_objects=self.mole,
+                mujoco_objects=self.cube,
                 x_range=[-0.03, 0.03],
                 y_range=[-0.03, 0.03],
                 rotation=None,
@@ -375,7 +383,7 @@ class Lift(ManipulationEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=self.mole,
+            mujoco_objects=self.cube,
         )
 
     def _setup_references(self):
@@ -387,7 +395,7 @@ class Lift(ManipulationEnv):
         super()._setup_references()
 
         # Additional object references from this env
-        self.mole_body_id = self.sim.model.body_name2id(self.mole.root_body)
+        self.cube_body_id = self.sim.model.body_name2id(self.cube.root_body)
 
     def _setup_observables(self):
         """
@@ -406,11 +414,11 @@ class Lift(ManipulationEnv):
             # cube-related observables
             @sensor(modality=modality)
             def cube_pos(obs_cache):
-                return np.array(self.sim.data.body_xpos[self.mole_body_id])
+                return np.array(self.sim.data.body_xpos[self.cube_body_id])
 
             @sensor(modality=modality)
             def cube_quat(obs_cache):
-                return convert_quat(np.array(self.sim.data.body_xquat[self.mole_body_id]), to="xyzw")
+                return convert_quat(np.array(self.sim.data.body_xquat[self.cube_body_id]), to="xyzw")
 
             sensors = [cube_pos, cube_quat]
 
@@ -464,7 +472,7 @@ class Lift(ManipulationEnv):
 
         # Color the gripper visualization site according to its distance to the cube
         if vis_settings["grippers"]:
-            self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.mole)
+            self._visualize_gripper_to_target(gripper=self.robots[0].gripper, target=self.cube)
 
     def _check_success(self):
         """
@@ -473,7 +481,7 @@ class Lift(ManipulationEnv):
         Returns:
             bool: True if cube has been lifted
         """
-        cube_height = self.sim.data.body_xpos[self.mole_body_id][2]
+        cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
         table_height = self.model.mujoco_arena.table_offset[2]
 
         # cube is higher than the table top above a margin

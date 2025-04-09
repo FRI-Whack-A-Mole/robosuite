@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # Set environment and robot directly
     options = {
         "env_name": "Lift",
-        "robots": "Jaco",  # You can also use ["Jaco"] if needed
+        "robots": "Sawyer",  # You can also use ["Jaco"] if needed
     }
 
     # Initialize the environment
