@@ -356,6 +356,13 @@ class Lift(ManipulationEnv):
             tex_attrib=tex_attrib,
             mat_attrib=mat_attrib,
         )
+        bluewood = CustomMaterial(
+            texture="WoodBlue",
+            tex_name="bluewood",
+            mat_name="bluewood_mat",
+            tex_attrib=tex_attrib,
+            mat_attrib=mat_attrib,
+        )
         self.cube = BoxObject(
             name="cube",
             size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
@@ -370,7 +377,7 @@ class Lift(ManipulationEnv):
             size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
             size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
             rgba=[1, 0, 0, 1],
-            material=redwood,
+            material=bluewood,
             obj_type="all",
         )
         self.cube1 = BoxObject(
@@ -378,7 +385,7 @@ class Lift(ManipulationEnv):
             size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
             size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
             rgba=[1, 0, 0, 1],
-            material=redwood,
+            material=bluewood,
             obj_type="all",
         )
 
@@ -405,7 +412,7 @@ class Lift(ManipulationEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=[self.cube, self.cube0, self.cube1],
+            mujoco_objects=[self.cube, self.cube0, self.cube1], #TODO: edited cube #
         )
 
     def _setup_references(self):

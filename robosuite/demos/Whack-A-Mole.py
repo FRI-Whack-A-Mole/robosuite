@@ -34,10 +34,13 @@ if __name__ == "__main__":
     # Run visualization loop
     for i in range(10000):
         start = time.time()
-        action = np.random.randn(*env.action_spec[0].shape)
+        action = np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
+        #action = 
         obs, reward, done, _ = env.step(action)
-        #if done, then reset
         env.render()
+
+        if done:
+            env.reset()
 
         # Limit frame rate
         elapsed = time.time() - start
