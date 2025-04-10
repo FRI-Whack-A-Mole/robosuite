@@ -242,7 +242,7 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 0.3  #TODO: adjust later??
+        max_reach_distance = 0.2  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
@@ -487,9 +487,9 @@ class Lift(ManipulationEnv):
         # table_height = self.model.mujoco_arena.table_offset[2]
         gripper = self.robots[0].gripper
         #print("Gripper contents:", gripper) #TODO:
-        #print("Gripper contents:", gripper)
-        #print("Gripper attributes:", dir(gripper))
-        gripper_closed = all(gripper["joints"][i] < gripper["joint_limits"][i][1] - 0.01 for i in range(len(gripper["joints"])))
+                # print("Gripper contents:", gripper)
+                # print("Gripper attributes:", dir(gripper))
+                # gripper_closed = all(gripper["joints"][i] < gripper["joint_limits"][i][1] - 0.01 for i in range(len(gripper["joints"])))
 
 
         gripper_to_cube_dist = self._gripper_to_target(
@@ -499,4 +499,4 @@ class Lift(ManipulationEnv):
 
         # cube is higher than the table top above a margin
         # return cube_height > table_height + 0.04 #TODO: for lifting!
-        return gripper_closed and in_contact #TODO: returning true?
+        return in_contact #and gripper_closed #TODO: returning true?
