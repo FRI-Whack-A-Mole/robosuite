@@ -242,16 +242,16 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 0.2  #TODO: adjust later??
+        max_reach_distance = 0.3  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
             reaching_reward = (max_reach_distance - dist) / max_reach_distance
-            reward += 0.5 * reaching_reward  # Scale the reaching reward
+            reward += 0.5 * reaching_reward  #scale the reaching reward
 
         #check for grasping
-        if self._check_grasp(gripper=gripper, object_geoms=self.cube):
-            reward += 0.25
+        # if self._check_grasp(gripper=gripper, object_geoms=self.cube): #TODO: if it were lifting
+        #     reward += 0.25
 
         #check if the cube has been lifted
         if self._check_success():
@@ -483,8 +483,20 @@ class Lift(ManipulationEnv):
         Returns:
             bool: True if cube has been lifted
         """
-        cube_height = self.sim.data.body_xpos[self.cube_body_id][2]
-        table_height = self.model.mujoco_arena.table_offset[2]
+        # cube_height = self.sim.data.body_xpos[self.cube_body_id][2] #TODO: this is for lifting!
+        # table_height = self.model.mujoco_arena.table_offset[2]
+        gripper = self.robots[0].gripper
+        #print("Gripper contents:", gripper) #TODO:
+        #print("Gripper contents:", gripper)
+        #print("Gripper attributes:", dir(gripper))
+        gripper_closed = all(gripper["joints"][i] < gripper["joint_limits"][i][1] - 0.01 for i in range(len(gripper["joints"])))
+
+
+        gripper_to_cube_dist = self._gripper_to_target(
+            gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True
+        )
+        in_contact = gripper_to_cube_dist < 0.05  #TODO: can adjust this threshold
 
         # cube is higher than the table top above a margin
-        return cube_height > table_height + 0.04
+        # return cube_height > table_height + 0.04 #TODO: for lifting!
+        return gripper_closed and in_contact #TODO: returning true?
