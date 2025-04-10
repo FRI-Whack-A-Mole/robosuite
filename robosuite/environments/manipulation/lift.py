@@ -256,6 +256,7 @@ class Lift(ManipulationEnv):
         #check if the cube has been lifted
         if self._check_success():
             reward += 1.5  # Larger reward for lifting
+            #reset position??
 
         #TODO: can add a small negative penalty for each step for more efficiency
         # should we do this or no??
@@ -495,7 +496,7 @@ class Lift(ManipulationEnv):
         gripper_to_cube_dist = self._gripper_to_target(
             gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True
         )
-        in_contact = gripper_to_cube_dist < 0.05  #TODO: can adjust this threshold
+        in_contact = gripper_to_cube_dist < 0.005  #TODO: can adjust this threshold
 
         # cube is higher than the table top above a margin
         # return cube_height > table_height + 0.04 #TODO: for lifting!
