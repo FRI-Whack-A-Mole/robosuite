@@ -19,7 +19,7 @@ if __name__ == "__main__":
         **options,
         has_renderer=True,
         has_offscreen_renderer=False,
-        ignore_done=True,
+        ignore_done=False,
         use_camera_obs=False,
         control_freq=20,
     )
@@ -36,6 +36,7 @@ if __name__ == "__main__":
         start = time.time()
         action = np.random.randn(*env.action_spec[0].shape)
         obs, reward, done, _ = env.step(action)
+        #if done, then reset
         env.render()
 
         # Limit frame rate

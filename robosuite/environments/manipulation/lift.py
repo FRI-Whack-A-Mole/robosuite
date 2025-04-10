@@ -365,16 +365,35 @@ class Lift(ManipulationEnv):
             obj_type="all",
         )
 
+        self.cube0 = BoxObject(
+            name="cube0",
+            size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
+            size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+            material=redwood,
+            obj_type="all",
+        )
+        self.cube1 = BoxObject(
+            name="cube1",
+            size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
+            size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
+            rgba=[1, 0, 0, 1],
+            material=redwood,
+            obj_type="all",
+        )
+
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
             self.placement_initializer.add_objects(self.cube)
+            self.placement_initializer.add_objects(self.cube0)
+            self.placement_initializer.add_objects(self.cube1)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=self.cube,
-                x_range=[-0.03, 0.03],
-                y_range=[-0.03, 0.03],
+                x_range=[-0.1, 0.1],
+                y_range=[-0.1, 0.1],
                 rotation=None,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
@@ -386,7 +405,7 @@ class Lift(ManipulationEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=self.cube,
+            mujoco_objects=[self.cube, self.cube0, self.cube1],
         )
 
     def _setup_references(self):
