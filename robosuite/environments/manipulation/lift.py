@@ -258,9 +258,11 @@ class Lift(ManipulationEnv):
             reward += 1.5  # Larger reward for lifting
 
         #TODO: can add a small negative penalty for each step for more efficiency
-        #ex. reward -= 0.001
+        # should we do this or no??
+        reward -= 0.001 #TODO:
 
-        #scale reward if requested -- idk this was there before
+
+        #scale reward if requested -- idk what this does but it was there before lol
         if self.reward_scale is not None:
             reward *= self.reward_scale
 
