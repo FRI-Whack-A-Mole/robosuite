@@ -519,7 +519,7 @@ class Lift(ManipulationEnv):
                 # gripper_closed = all(gripper["joints"][i] < gripper["joint_limits"][i][1] - 0.01 for i in range(len(gripper["joints"])))
 
 
-        gripper_to_cube_dist = self._gripper_to_target(
+        gripper_to_cube_dist = self._gripper_to_target( #TODO: To sneha: could u click on it and lemme know where this is defined cause im trying to figure out how to get gripper position but i cant find it 
             gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True
         )
         in_contact = gripper_to_cube_dist < 0.005  #TODO: can adjust this threshold

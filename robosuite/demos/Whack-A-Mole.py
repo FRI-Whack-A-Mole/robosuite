@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # Set environment and robot directly
     options = {
         "env_name": "Lift",
-        "robots": "Sawyer",  # You can also use ["Jaco"] if needed
+        "robots": "Panda",  # You can also use ["Jaco"] if needed
     }
 
     # Initialize the environment
@@ -34,8 +34,16 @@ if __name__ == "__main__":
     # Run visualization loop
     for i in range(10000):
         start = time.time()
-        action = np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
-        #action = 
+        cube_pos = env.sim.data.body_xpos[env.cube_body_id]
+        eef_pos = #TODO 
+        direction = cube_pos - eef_pos
+        #is this already done for us??
+        direction = 0.05 * direction / np.linalg.norm(direction) # basically square root of (x² + y² + z²) to get the norm
+        action = np.zeros(env.action_spec[0].shape) #this basically zeros it
+        action[:3] = direction  # move toward object by setting the first 3 to x,y,z directions
+        action[3] = 0.0 # i dont think we need this line casue it controls the gripper
+        #initial code below
+        #action = np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
         obs, reward, done, _ = env.step(action)
         env.render()
 
