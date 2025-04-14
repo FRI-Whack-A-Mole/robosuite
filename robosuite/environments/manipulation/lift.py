@@ -260,7 +260,8 @@ class Lift(ManipulationEnv):
 
         #TODO: can add a small negative penalty for each step for more efficiency
         # should we do this or no??
-        reward -= 0.001 #TODO:
+        else:
+            reward -= 0.001 #TODO:
 
 
         #scale reward if requested -- idk what this does but it was there before lol
