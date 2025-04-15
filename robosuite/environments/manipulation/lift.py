@@ -242,12 +242,12 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 0.2  #TODO: adjust later??
+        max_reach_distance = 1  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
             reaching_reward = (max_reach_distance - dist) / max_reach_distance
-            reward += 0.5 * reaching_reward  #scale the reaching reward
+            reward += 1 * reaching_reward  #scale the reaching reward
 
         #check for grasping
         # if self._check_grasp(gripper=gripper, object_geoms=self.cube): #TODO: if it were lifting
@@ -260,8 +260,8 @@ class Lift(ManipulationEnv):
 
         #TODO: can add a small negative penalty for each step for more efficiency
         # should we do this or no??
-        else:
-            reward -= 0.001 #TODO:
+                # else:
+                #     reward -= 0.001 #TODO:
 
 
         #scale reward if requested -- idk what this does but it was there before lol

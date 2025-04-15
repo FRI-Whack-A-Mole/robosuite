@@ -92,7 +92,7 @@ if __name__ == "__main__":
         obs, reward, done, _ = env.step(action)
         env.render()
         print("Reward:", reward)
-        print("Done: ", done)
+        #print("Done: ", done)
 
         if done:
             env.reset()
