@@ -42,25 +42,25 @@ if __name__ == "__main__":
         # cube_pos = env.sim.data.body_xpos[env.cube_body_id]
         # eef_pos = env.robots[0]._hand_pos
         action = np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
-        last_action = np.random.randn(*env.action_spec[0].shape)
+            # last_action = np.random.randn(*env.action_spec[0].shape)
 
 
-        action[:3] += np.random.normal(0, exploration_noise_std, 3)
-        #action = np.clip(action, *env.action_spec[0].low(lower bound of array??), env.action_spec[0].high(upper bound??)) #trying to change to have lower and upper bounds of the action space dimension
-        print("action attributes", dir(env.action_spec[0])) #TODO: checking attributes to change above line
+            # action[:3] += np.random.normal(0, exploration_noise_std, 3)
+            # #action = np.clip(action, *env.action_spec[0].low(lower bound of array??), env.action_spec[0].high(upper bound??)) #trying to change to have lower and upper bounds of the action space dimension
+            # print("action attributes", dir(env.action_spec[0])) #TODO: checking attributes to change above line
 
 
-        reward_diff = reward - previous_reward
-        if reward_diff > 0:
-            last_action[:3] += learning_rate * last_action[:3]
-        elif reward_diff <= 0:
-            last_action[:3] -= learning_rate * last_action[:3]
-        
+            # reward_diff = reward - previous_reward
+            # if reward_diff > 0:
+            #     last_action[:3] += learning_rate * last_action[:3]
+            # elif reward_diff <= 0:
+            #     last_action[:3] -= learning_rate * last_action[:3]
+            
 
-        last_action[3] = 0.0
-        last_action = np.clip(last_action, env.action_spec[0].low, env.action_spec[0].high)
+            # last_action[3] = 0.0
+            # last_action = np.clip(last_action, env.action_spec[0].low, env.action_spec[0].high)
 
-        previous_reward = reward
+            # previous_reward = reward`
 
         # eef_pos = np.array(env.robots[0]._hand_pos["right"])
         # cube_pos = env.sim.data.body_xpos[env.cube_body_id]
