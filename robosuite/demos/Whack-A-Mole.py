@@ -39,15 +39,21 @@ if __name__ == "__main__":
     # Run visualization loop
     for i in range(10000):
         start = time.time()
-        # cube_pos = env.sim.data.body_xpos[env.cube_body_id]
-        # eef_pos = env.robots[0]._hand_pos
-        action = np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
+        action = np.zeros(*env.action_spec[0].shape)
+        cube_pos = env.sim.data.body_xpos[env.cube_body_id]
+        gripper = env.robots[0].gripper['right']
+        eef_pos = env.sim.data.get_site_xpos(gripper.important_sites["grip_site"])
+        
+        #env.robots[0]._hand_pos
+        action[:3] = np.array(cube_pos) - np.array(eef_pos)
+        #np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
             # last_action = np.random.randn(*env.action_spec[0].shape)
 
 
             # action[:3] += np.random.normal(0, exploration_noise_std, 3)
             # #action = np.clip(action, *env.action_spec[0].low(lower bound of array??), env.action_spec[0].high(upper bound??)) #trying to change to have lower and upper bounds of the action space dimension
-            # print("action attributes", dir(env.action_spec[0])) #TODO: checking attributes to change above line
+        # print("gripper position: ", eef_pos)
+        # print("cube position: ", cube_pos) #TODO: checking attributes to change above line
 
 
             # reward_diff = reward - previous_reward
@@ -91,7 +97,7 @@ if __name__ == "__main__":
         #initial code below
         obs, reward, done, _ = env.step(action)
         env.render()
-        print("Reward:", reward)
+        # print("Done:", done)
         #print("Done: ", done)
 
         if done:

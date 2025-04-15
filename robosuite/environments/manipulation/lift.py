@@ -246,17 +246,46 @@ class Lift(ManipulationEnv):
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
-            reaching_reward = (max_reach_distance - dist) / max_reach_distance
-            reward += 1 * reaching_reward  #scale the reaching reward
+            reaching_reward = 1 - np.tanh(10.0 * dist)
+            #if ()
+            #reaching_reward = (max_reach_distance - dist) / max_reach_distance
+            reward += reaching_reward  #scale the reaching reward
 
         #check for grasping
+        #print("hi")
         # if self._check_grasp(gripper=gripper, object_geoms=self.cube): #TODO: if it were lifting
         #     reward += 0.25
 
         #check if the cube has been lifted
         if self._check_success():
-            reward += 1.5  # Larger reward for lifting
-            #reset position??
+            reward += 2.5  # Larger reward for lifting
+            #print("not hi")
+            #breakpoint()
+            #reset position?? #TODO: #TODO:#TODO:#TODO:#TODO:#TODO:#TODO:
+            # self.placement_initializer.reset()
+            # self.placement_initializer.add_objects(self.cube)
+                # self.placement_initializer = UniformRandomSampler(
+                #     name="ObjectSampler",
+                #     mujoco_objects=self.cube,
+                #     x_range=[-0.3, 0.3],
+                #     y_range=[-0.3, 0.3],
+                #     rotation=None,
+                #     ensure_object_boundary_in_range=False,
+                #     ensure_valid_placement=True,
+                #     reference_pos=self.table_offset,
+                #     z_offset=0.01,
+                # )
+            current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
+            current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
+            new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
+            new_orientation = current_quat
+            self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
+            self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
+            self.sim.forward()
+            #breakpoint()
+            # print("SUCCESS!!!")
+
+
 
         #TODO: can add a small negative penalty for each step for more efficiency
         # should we do this or no??
@@ -373,35 +402,35 @@ class Lift(ManipulationEnv):
             obj_type="all",
         )
 
-        self.cube0 = BoxObject(
-            name="cube0",
-            size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
-            size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
-            rgba=[1, 0, 0, 1],
-            material=bluewood,
-            obj_type="all",
-        )
-        self.cube1 = BoxObject(
-            name="cube1",
-            size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
-            size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
-            rgba=[1, 0, 0, 1],
-            material=bluewood,
-            obj_type="all",
-        )
+        # self.cube0 = BoxObject(
+        #     name="cube0",
+        #     size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
+        #     size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
+        #     rgba=[1, 0, 0, 1],
+        #     material=bluewood,
+        #     obj_type="all",
+        # )
+        # self.cube1 = BoxObject(
+        #     name="cube1",
+        #     size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
+        #     size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
+        #     rgba=[1, 0, 0, 1],
+        #     material=bluewood,
+        #     obj_type="all",
+        # )
 
         # Create placement initializer
         if self.placement_initializer is not None:
             self.placement_initializer.reset()
             self.placement_initializer.add_objects(self.cube)
-            self.placement_initializer.add_objects(self.cube0)
-            self.placement_initializer.add_objects(self.cube1)
+            # self.placement_initializer.add_objects(self.cube0)
+            # self.placement_initializer.add_objects(self.cube1)
         else:
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=self.cube,
-                x_range=[-0.1, 0.1],
-                y_range=[-0.1, 0.1],
+                x_range=[-0.3, 0.3],
+                y_range=[-0.3, 0.3],
                 rotation=None,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
@@ -413,7 +442,7 @@ class Lift(ManipulationEnv):
         self.model = ManipulationTask(
             mujoco_arena=mujoco_arena,
             mujoco_robots=[robot.robot_model for robot in self.robots],
-            mujoco_objects=[self.cube, self.cube0, self.cube1], #TODO: edited cube #
+            mujoco_objects=[self.cube], #TODO: edited cube #
         )
 
     def _setup_references(self):
@@ -513,18 +542,17 @@ class Lift(ManipulationEnv):
         """
         # cube_height = self.sim.data.body_xpos[self.cube_body_id][2] #TODO: this is for lifting!
         # table_height = self.model.mujoco_arena.table_offset[2]
-        gripper = self.robots[0].gripper
+        gripper = self.robots[0].gripper['right']
         #print("Gripper contents:", gripper) #TODO:
                 # print("Gripper contents:", gripper)
                 # print("Gripper attributes:", dir(gripper))
                 # gripper_closed = all(gripper["joints"][i] < gripper["joint_limits"][i][1] - 0.01 for i in range(len(gripper["joints"])))
 
-
-        gripper_to_cube_dist = self._gripper_to_target( #TODO: To sneha: could u click on it and lemme know where this is defined cause im trying to figure out how to get gripper position but i cant find it 
-            gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True
-        )
-        in_contact = gripper_to_cube_dist < 0.005  #TODO: can adjust this threshold
+        #print("working??")
+        gripper_to_cube_dist = self._gripper_to_target(gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True)
+        in_contact = gripper_to_cube_dist < 0.05  #TODO: can adjust this threshold
 
         # cube is higher than the table top above a margin
         # return cube_height > table_height + 0.04 #TODO: for lifting!
+        #print(in_contact)
         return in_contact #and gripper_closed #TODO: returning true?
