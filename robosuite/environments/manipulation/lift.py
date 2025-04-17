@@ -275,13 +275,37 @@ class Lift(ManipulationEnv):
                 #     reference_pos=self.table_offset,
                 #     z_offset=0.01,
                 # )
-            current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
-            current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
-            new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
-            new_orientation = current_quat
-            self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
-            self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
-            self.sim.forward()
+            #current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
+            #current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
+            #new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
+            # #new_orientation = 
+            #new_orientation = current_quat
+            # #print("orientation: ", new_orientation)
+            #self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
+            #self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
+            # self.sim.forward()
+            # current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
+            # current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
+            # new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
+            # new_orientation = current_quat
+            # self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
+            # self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
+            # self.sim.forward()
+            #self.cube.set_pose(np.array([0.2, 0.2, 0.025 + self.table_offset[2]]), self.sim)
+            #self.placement_initializer.add_objects(self.cube)
+            #self.sim.data.set_body_xpos(self.cube.root_body, np.array([0.2, 0.2, 0.025 + self.table_offset[2]]))
+            #self._reset_simulation()
+
+            object_placements = self.placement_initializer.sample()
+
+            for obj_pos, obj_quat, obj in object_placements.values():
+                self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+
+            #self._reset_internal(self)
+
+
+            #self.cube.root_body.xpos[self.model.body_name2id(self.cube.root_body)] = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
+            #breakpoint()
             #breakpoint()
             # print("SUCCESS!!!")
 
@@ -386,13 +410,6 @@ class Lift(ManipulationEnv):
             tex_attrib=tex_attrib,
             mat_attrib=mat_attrib,
         )
-        bluewood = CustomMaterial(
-            texture="WoodBlue",
-            tex_name="bluewood",
-            mat_name="bluewood_mat",
-            tex_attrib=tex_attrib,
-            mat_attrib=mat_attrib,
-        )
         self.cube = BoxObject(
             name="cube",
             size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
@@ -429,8 +446,8 @@ class Lift(ManipulationEnv):
             self.placement_initializer = UniformRandomSampler(
                 name="ObjectSampler",
                 mujoco_objects=self.cube,
-                x_range=[-0.3, 0.3],
-                y_range=[-0.3, 0.3],
+                x_range=[-0.25, 0.25],
+                y_range=[-0.25, 0.25],
                 rotation=None,
                 ensure_object_boundary_in_range=False,
                 ensure_valid_placement=True,
