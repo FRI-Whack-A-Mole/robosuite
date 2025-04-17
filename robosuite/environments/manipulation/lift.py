@@ -573,3 +573,5 @@ class Lift(ManipulationEnv):
         # return cube_height > table_height + 0.04 #TODO: for lifting!
         #print(in_contact)
         return in_contact #and gripper_closed #TODO: returning true?
+    def set_target_position(self, target):
+        pass
