@@ -47,54 +47,6 @@ if __name__ == "__main__":
         #env.robots[0]._hand_pos
         action[:3] = np.array(cube_pos) - np.array(eef_pos)
         #np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
-            # last_action = np.random.randn(*env.action_spec[0].shape)
-
-
-            # action[:3] += np.random.normal(0, exploration_noise_std, 3)
-            # #action = np.clip(action, *env.action_spec[0].low(lower bound of array??), env.action_spec[0].high(upper bound??)) #trying to change to have lower and upper bounds of the action space dimension
-        # print("gripper position: ", eef_pos)
-        # print("cube position: ", cube_pos) #TODO: checking attributes to change above line
-
-
-            # reward_diff = reward - previous_reward
-            # if reward_diff > 0:
-            #     last_action[:3] += learning_rate * last_action[:3]
-            # elif reward_diff <= 0:
-            #     last_action[:3] -= learning_rate * last_action[:3]
-            
-
-            # last_action[3] = 0.0
-            # last_action = np.clip(last_action, env.action_spec[0].low, env.action_spec[0].high)
-
-            # previous_reward = reward`
-
-        # eef_pos = np.array(env.robots[0]._hand_pos["right"])
-        # cube_pos = env.sim.data.body_xpos[env.cube_body_id]
-        #print("cube_pos:", cube_pos, type(cube_pos))
-        #print("eef_pos:", eef_pos, type(eef_pos))
-            # direction = eef_pos - cube_pos
-            # direction = 0.05 * direction / np.linalg.norm(direction)
-        # direction = eef_pos - cube_pos
-        # norm_direction = np.linalg.norm(direction)
-        # if norm_direction > 0:
-        #     direction = 0.05 * direction / norm_direction
-        # else:
-        #     direction = np.zeros(3)
-
-        # action = np.zeros(env.action_spec[0].shape)
-        # action[:3] = direction
-        #action[3] = 0.0  # keep gripper open
-
-
-
-        #gripper_pos = env.sim.data.get_site_xpos(robot.gripper.important_sites["grip_site"])
-        #direction = cube_pos - eef_pos
-        #is this already done for us??
-        #direction = 0.05 * direction / np.linalg.norm(direction) # basically square root of (x² + y² + z²) to get the norm
-        #action = np.zeros(env.action_spec[0].shape) #this basically zeros it
-        #action[:3] = direction  # move toward object by setting the first 3 to x,y,z directions
-        #action[3] = 0.0 # i dont think we need this line casue it controls the gripper
-        #initial code below
         obs, reward, done, _ = env.step(action)
         env.render()
         # print("Done:", done)
