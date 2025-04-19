@@ -242,7 +242,7 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 1  #TODO: adjust later??
+        max_reach_distance = 5  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
@@ -259,42 +259,6 @@ class Lift(ManipulationEnv):
         #check if the cube has been lifted
         if self._check_success():
             reward += 2.5  # Larger reward for lifting
-            #print("not hi")
-            #breakpoint()
-            #reset position?? #TODO: #TODO:#TODO:#TODO:#TODO:#TODO:#TODO:
-            # self.placement_initializer.reset()
-            # self.placement_initializer.add_objects(self.cube)
-                # self.placement_initializer = UniformRandomSampler(
-                #     name="ObjectSampler",
-                #     mujoco_objects=self.cube,
-                #     x_range=[-0.3, 0.3],
-                #     y_range=[-0.3, 0.3],
-                #     rotation=None,
-                #     ensure_object_boundary_in_range=False,
-                #     ensure_valid_placement=True,
-                #     reference_pos=self.table_offset,
-                #     z_offset=0.01,
-                # )
-            #current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
-            #current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
-            #new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
-            # #new_orientation = 
-            #new_orientation = current_quat
-            # #print("orientation: ", new_orientation)
-            #self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
-            #self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
-            # self.sim.forward()
-            # current_pose = self.sim.data.get_body_xpos(self.cube.root_body)
-            # current_quat = self.sim.data.get_body_xquat(self.cube.root_body)
-            # new_position = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
-            # new_orientation = current_quat
-            # self.sim.data.set_mocap_pos(self.cube.root_body, new_position)
-            # self.sim.data.set_mocap_quat(self.cube.root_body, new_orientation)
-            # self.sim.forward()
-            #self.cube.set_pose(np.array([0.2, 0.2, 0.025 + self.table_offset[2]]), self.sim)
-            #self.placement_initializer.add_objects(self.cube)
-            #self.sim.data.set_body_xpos(self.cube.root_body, np.array([0.2, 0.2, 0.025 + self.table_offset[2]]))
-            #self._reset_simulation()
 
             object_placements = self.placement_initializer.sample()
 
@@ -567,7 +531,7 @@ class Lift(ManipulationEnv):
 
         #print("working??")
         gripper_to_cube_dist = self._gripper_to_target(gripper=gripper, target=self.cube.root_body, target_type="body", return_distance=True)
-        in_contact = gripper_to_cube_dist < 0.05  #TODO: can adjust this threshold
+        in_contact = gripper_to_cube_dist < 0.075  #TODO: can adjust this threshold
 
         # cube is higher than the table top above a margin
         # return cube_height > table_height + 0.04 #TODO: for lifting!
