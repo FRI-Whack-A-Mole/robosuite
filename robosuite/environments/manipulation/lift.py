@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+import time
 
 from robosuite.environments.manipulation.manipulation_env import ManipulationEnv
 from robosuite.models.arenas import TableArena
@@ -191,6 +192,19 @@ class Lift(ManipulationEnv):
         # object placement initializer
         self.placement_initializer = placement_initializer
 
+        ##TODO:
+        self.cube_positions = [
+            np.array([0.0, 0.2, 0.82]),
+            np.array([-0.2, 0, 0.82]),
+            np.array([0, -0.2, 0.82]),
+            np.array([0.2, 0.0, 0.82])
+        ]
+        self.cube_quat = np.array([1, 0, 0, 0])
+        self.current_cube_index = 0
+        self.cube_move_interval = 100  # how many steps before auto-move
+        self._steps_since_cube_move = 0
+        ##TODO:
+
         super().__init__(
             robots=robots,
             env_configuration=env_configuration,
@@ -219,6 +233,21 @@ class Lift(ManipulationEnv):
             renderer_config=renderer_config,
         )
     
+    # def reset_in_increments(self):
+    #     for i in range(10000):
+    #         start = time.time()
+
+    #         if i % 20:
+    #             object_placements = self.placement_initializer.sample()
+
+    #             for obj_pos, obj_quat, obj in object_placements.values():
+    #                 self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+
+    #         elapsed = time.time() - start
+    #         diff = 1 / 25 - elapsed
+    #         if diff > 0:
+    #             time.sleep(diff)
+    
     def reward(self, action=None):
         """
         reward function
@@ -237,6 +266,8 @@ class Lift(ManipulationEnv):
         reward = 0.0
         gripper = self.robots[0].gripper
         cube_body = self.cube.root_body
+        self._steps_since_cube_move += 1
+        # start = time.time()
 
         #distance between the gripper and the cube
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
@@ -246,10 +277,11 @@ class Lift(ManipulationEnv):
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
-            reaching_reward = 1 - np.tanh(10.0 * dist)
+            reaching_reward = 1 - np.tanh(1.0 * dist)
             #if ()
             #reaching_reward = (max_reach_distance - dist) / max_reach_distance
             reward += reaching_reward  #scale the reaching reward
+            #print("Reward prior to success", reward)
 
         #check for grasping
         #print("hi")
@@ -257,86 +289,50 @@ class Lift(ManipulationEnv):
         #     reward += 0.25
 
         #check if the cube has been lifted
-        if self._check_success():
-            reward += 2.5  # Larger reward for lifting
+        if self._check_success() or (self._steps_since_cube_move % self.cube_move_interval == 0):
+            #print("Steps: ", self._steps_since_cube_move)
+            if self._check_success():
+                reward += 1.0 * (1 - self._steps_since_cube_move / 150)
+                reward += 2.5  # Larger reward for touching
 
-            object_placements = self.placement_initializer.sample()
+                #print("Reward: ", reward)
+            # object_placements = self.placement_initializer.sample()
 
-            for obj_pos, obj_quat, obj in object_placements.values():
-                self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
-
-            #self._reset_internal(self)
-
-
-            #self.cube.root_body.xpos[self.model.body_name2id(self.cube.root_body)] = np.array([0.2, 0.2, 0.025 + self.table_offset[2]])
-            #breakpoint()
-            #breakpoint()
-            # print("SUCCESS!!!")
-
-
-
-        #TODO: can add a small negative penalty for each step for more efficiency
-        # should we do this or no??
-                # else:
-                #     reward -= 0.001 #TODO:
+            # for obj_pos, obj_quat, obj in object_placements.values():
+            #     self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+            self._steps_since_cube_move = 0
+            self.current_cube_index = (self.current_cube_index + 1) % len(self.cube_positions)
+            new_pos = self.cube_positions[self.current_cube_index]
+            self.sim.data.set_joint_qpos(
+                self.cube.joints[0],
+                np.concatenate([new_pos, self.cube_quat])
+            )
 
 
         #scale reward if requested -- idk what this does but it was there before lol
         if self.reward_scale is not None:
             reward *= self.reward_scale
 
+        #for i in range(10000):
+            #start = time.time()
+
+            #if i % 20:
+                # object_placements = self.placement_initializer.sample()
+
+                # for obj_pos, obj_quat, obj in object_placements.values():
+                #     self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+
+            # elapsed = time.time() - start
+            # diff = 1 / 25 - elapsed
+            # if elapsed % 100 == 0:
+            #     object_placements = self.placement_initializer.sample()
+            #     for obj_pos, obj_quat, obj in object_placements.values():
+            #         self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+    
+            # if diff > 0:
+            #     time.sleep(diff)
+
         return reward
-
-    # def reward(self, action=None):
-    #     """
-    #     Reward function for the task.
-
-    #     Sparse un-normalized reward:
-
-    #         - a discrete reward of 2.25 is provided if the cube is lifted
-
-    #     Un-normalized summed components if using reward shaping:
-
-    #         - Reaching: in [0, 1], to encourage the arm to reach the cube
-    #         - Grasping: in {0, 0.25}, non-zero if arm is grasping the cube
-    #         - Lifting: in {0, 1}, non-zero if arm has lifted the cube
-
-    #     The sparse reward only consists of the lifting component.
-
-    #     Note that the final reward is normalized and scaled by
-    #     reward_scale / 2.25 as well so that the max score is equal to reward_scale
-
-    #     Args:
-    #         action (np array): [NOT USED]
-
-    #     Returns:
-    #         float: reward value
-    #     """
-    #     reward = 0.0
-
-    #     # sparse completion reward
-    #     if self._check_success():
-    #         reward = 2.25
-
-    #     # use a shaping reward
-    #     elif self.reward_shaping:
-
-    #         # reaching reward
-    #         dist = self._gripper_to_target(
-    #             gripper=self.robots[0].gripper, target=self.cube.root_body, target_type="body", return_distance=True
-    #         )
-    #         reaching_reward = 1 - np.tanh(10.0 * dist)
-    #         reward += reaching_reward
-
-    #         # grasping reward
-    #         if self._check_grasp(gripper=self.robots[0].gripper, object_geoms=self.cube):
-    #             reward += 0.25
-
-    #     # Scale reward if requested
-    #     if self.reward_scale is not None:
-    #         reward *= self.reward_scale / 2.25
-
-    #     return reward
 
     def _load_model(self):
         """
@@ -382,23 +378,6 @@ class Lift(ManipulationEnv):
             material=redwood,
             obj_type="all",
         )
-
-        # self.cube0 = BoxObject(
-        #     name="cube0",
-        #     size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
-        #     size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
-        #     rgba=[1, 0, 0, 1],
-        #     material=bluewood,
-        #     obj_type="all",
-        # )
-        # self.cube1 = BoxObject(
-        #     name="cube1",
-        #     size_min=[0.020, 0.020, 0.035],  # [0.015, 0.015, 0.015],
-        #     size_max=[0.022, 0.022, 0.035],  # [0.018, 0.018, 0.018])
-        #     rgba=[1, 0, 0, 1],
-        #     material=bluewood,
-        #     obj_type="all",
-        # )
 
         # Create placement initializer
         if self.placement_initializer is not None:
@@ -488,15 +467,21 @@ class Lift(ManipulationEnv):
         """
         super()._reset_internal()
 
-        # Reset all object positions using initializer sampler if we're not directly loading from an xml
-        if not self.deterministic_reset:
+        # # Reset all object positions using initializer sampler if we're not directly loading from an xml
+        # if not self.deterministic_reset:
 
-            # Sample from the placement initializer for all objects
-            object_placements = self.placement_initializer.sample()
+        #     # Sample from the placement initializer for all objects
+        #     object_placements = self.placement_initializer.sample()
 
-            # Loop through all objects and reset their positions
-            for obj_pos, obj_quat, obj in object_placements.values():
-                self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+        #     # Loop through all objects and reset their positions
+        #     for obj_pos, obj_quat, obj in object_placements.values():
+        #         self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
+        self.current_cube_index = 0
+        initial_pos = self.cube_positions[self.current_cube_index]
+        self.sim.data.set_joint_qpos(
+            self.cube.joints[0],
+            np.concatenate([initial_pos, self.cube_quat])
+        )
 
     def visualize(self, vis_settings):
         """
