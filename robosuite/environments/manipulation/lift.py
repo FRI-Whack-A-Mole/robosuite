@@ -156,7 +156,7 @@ class Lift(ManipulationEnv):
         use_camera_obs=True,
         use_object_obs=True,
         reward_scale=1.0,
-        reward_shaping=False,
+        reward_shaping=True, #TODO:
         placement_initializer=None,
         has_renderer=False,
         has_offscreen_renderer=True,
@@ -273,42 +273,62 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 5  #TODO: adjust later??
+        max_reach_distance = 0.5  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
-            reaching_reward = 1 - np.tanh(1.0 * dist)
+            reaching_reward = ((dist + 0.5) ** (-2)) - 1
+            # reaching_reward = 2 - np.exp(1.0 * dist)
+            # if (dist < 0.13699):
+                # if (dist > 0.25):
+                #     reaching_reward = 9 * ((0.5 - dist) ** 2)
+                # else:
+                #     reaching_reward = (-0.01125 * ((0.25 * dist) ** (-2))) + 5.5
+            # reaching_reward = 25 - (2 ** ((dist) + 4.4))
+            # reaching_reward = (1 - (-0.00125 * ((dist + 0.1) ** (-4)))) - 1
+                #reaching_reward = 10 - np.exp(2 * dist)
+                # print("Dist: ", dist)
+                # print("Reward", reaching_reward)
             #if ()
             #reaching_reward = (max_reach_distance - dist) / max_reach_distance
             reward += reaching_reward  #scale the reaching reward
             #print("Reward prior to success", reward)
 
-        #check for grasping
-        #print("hi")
-        # if self._check_grasp(gripper=gripper, object_geoms=self.cube): #TODO: if it were lifting
-        #     reward += 0.25
-
         #check if the cube has been lifted
-        if self._check_success() or (self._steps_since_cube_move % self.cube_move_interval == 0):
+        if self._check_success(): #or (self._steps_since_cube_move % self.cube_move_interval == 0):
             #print("Steps: ", self._steps_since_cube_move)
-            if self._check_success():
-                reward += 1.0 * (1 - self._steps_since_cube_move / 150)
-                reward += 2.5  # Larger reward for touching
+            # if self._check_success():
+            #     reward += 1.0 * (1 - self._steps_since_cube_move / 150)
+            #     reward += 2.5  # Larger reward for touching
+                #self.cube_move_interval = self._steps_since_cube_move
+                #TODO:
+                #compare isntead with the previous time it tried to contact the cube at that same position
+                    #use a global varibale for an array, index using the same cube index as the positions,
+                        #compare self._steps_since_cube_move with that earlier steps, see if imporvement
+                            #reward accordingly.
 
                 #print("Reward: ", reward)
-            # object_placements = self.placement_initializer.sample()
 
+            reward += 5
+            self._reset_internal()
+            # super()._reset_internal()
+            
+            # print("reward: ", reward)
+            # object_placements = self.placement_initializer.sample()
             # for obj_pos, obj_quat, obj in object_placements.values():
             #     self.sim.data.set_joint_qpos(obj.joints[0], np.concatenate([np.array(obj_pos), np.array(obj_quat)]))
-            self._steps_since_cube_move = 0
-            self.current_cube_index = (self.current_cube_index + 1) % len(self.cube_positions)
-            new_pos = self.cube_positions[self.current_cube_index]
-            self.sim.data.set_joint_qpos(
-                self.cube.joints[0],
-                np.concatenate([new_pos, self.cube_quat])
-            )
 
+            # else:
+            #     reward -= 0.1
+            # self._steps_since_cube_move = 0
+            # self.current_cube_index = (self.current_cube_index + 1) % len(self.cube_positions)
+            # new_pos = self.cube_positions[self.current_cube_index]
+            # self.sim.data.set_joint_qpos(
+            #     self.cube.joints[0],
+            #     np.concatenate([new_pos, self.cube_quat])
+            # )
 
+        # print("Reward: ", reward)
         #scale reward if requested -- idk what this does but it was there before lol
         if self.reward_scale is not None:
             reward *= self.reward_scale

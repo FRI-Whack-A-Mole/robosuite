@@ -20,6 +20,7 @@ def create_filenames_for_each_model(name_model_actual="point_model"):   # from o
 checkpoint_directory = "home/FRI_WBC"  # this one location other than tensorboard log to save checkpoints for models
 os.makedirs(checkpoint_directory, exist_ok=True)  # param just to ensure the directory exists
 
+# latest_model_path = os.path.join(checkpoint_directory, "point_model_2025_04_20_13h_30m_24s.zip")
 latest_model_path = os.path.join(checkpoint_directory, "point_model_latest_checkpoint.zip")
 
 #######################################################################################
@@ -36,7 +37,6 @@ if __name__=="__main__":
         use_camera_obs=False,
         reward_shaping=True  #  dense reward
     )
-    #env.reset()
     env.set_target_position(target_ee_position)
     
     # Vectorize and Normalize Environment
@@ -47,7 +47,7 @@ if __name__=="__main__":
 #############################################################################################################
    
     # Set up and train the PPO model  ==> changed loading of the model ==> Updated path and inn case nothing loads
-    file_path = "point_model.zip"
+    file_path = "point_model.zip" #TODO: changed initial model TODO:
     if os.path.exists(latest_model_path):   # this will automatically load the latest model
         print(f"Loading the latest model from: {latest_model_path}")   # loading latest model form latest path
        # also if needed to load specific model can just modify the path and ensure the pth is included and the name of teh model
