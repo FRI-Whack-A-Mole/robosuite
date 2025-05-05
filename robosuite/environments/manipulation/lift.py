@@ -273,12 +273,14 @@ class Lift(ManipulationEnv):
         dist = self._gripper_to_target(gripper=gripper, target=cube_body, target_type="body", return_distance=True)
 
         #defining a maximum distance for consideration(like further away gives minimal reward)
-        max_reach_distance = 0.5  #TODO: adjust later??
+        max_reach_distance = 1  #TODO: adjust later??
 
         #calculate a reaching reward based on the distance
         if dist < max_reach_distance:
-            reaching_reward = ((dist + 0.5) ** (-2)) - 1
+            # reaching_reward = ((dist + 0.5) ** (-2))
             # reaching_reward = 2 - np.exp(1.0 * dist)
+            reaching_reward = (1 - np.tanh(3.0 * dist))
+                # reaching_reward = 1 - np.tanh(15.0 * dist)
             # if (dist < 0.13699):
                 # if (dist > 0.25):
                 #     reaching_reward = 9 * ((0.5 - dist) ** 2)
@@ -310,8 +312,8 @@ class Lift(ManipulationEnv):
                 #print("Reward: ", reward)
 
             reward += 5
-            self._reset_internal()
-            # super()._reset_internal()
+            # self._reset_internal()
+            super()._reset_internal()
             
             # print("reward: ", reward)
             # object_placements = self.placement_initializer.sample()
@@ -320,13 +322,14 @@ class Lift(ManipulationEnv):
 
             # else:
             #     reward -= 0.1
-            # self._steps_since_cube_move = 0
-            # self.current_cube_index = (self.current_cube_index + 1) % len(self.cube_positions)
-            # new_pos = self.cube_positions[self.current_cube_index]
-            # self.sim.data.set_joint_qpos(
-            #     self.cube.joints[0],
-            #     np.concatenate([new_pos, self.cube_quat])
-            # )
+            
+            self._steps_since_cube_move = 0
+            self.current_cube_index = (self.current_cube_index + 1) % len(self.cube_positions)
+            new_pos = self.cube_positions[self.current_cube_index]
+            self.sim.data.set_joint_qpos(
+                self.cube.joints[0],
+                np.concatenate([new_pos, self.cube_quat])
+            )
 
         # print("Reward: ", reward)
         #scale reward if requested -- idk what this does but it was there before lol

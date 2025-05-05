@@ -94,7 +94,7 @@
 #    #np.random.randn(*env.action_spec[0].shape) #TODO: set the actions
   
 #    obs, reward, done, _ = env.step(action)
-# #    print("Reward: ", reward)
+#    print("Reward: ", reward)
 #    env.render()
 
 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     vec_env.reset()
 
     # model_path = "home/FRI_WBC/point_model_latest_checkpoint.zip"
-    model_path = "home/FRI_WBC/point_model_2025_04_21_18h_10m_40s.zip"
+    model_path = "home/FRI_WBC/point_model_2025_05_05_13h_44m_08s.zip"
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model not found at: {model_path}")
     
